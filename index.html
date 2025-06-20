@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>案件スケジュール管理シート</title>
+    <title>【共同編集】案件スケジュール管理シート</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
@@ -16,7 +16,7 @@
             padding: 10px 12px;
             border: 1px solid #e2e8f0; /* slate-200 */
             vertical-align: top;
-            min-height: 60px; /* 少し高さを確保 */
+            min-height: 60px;
             transition: background-color 0.2s;
         }
         .table-cell[contenteditable="true"]:focus {
@@ -34,36 +34,26 @@
             text-align: left;
             padding: 12px;
         }
-        .header-cell .project-title {
-            font-size: 0.95rem;
-            color: #1e293b;
-        }
-        .header-cell .project-details {
-            font-size: 0.8rem;
-            font-weight: 400;
-            color: #64748b;
-        }
-        .saturday {
-            background-color: #f0f9ff; /* sky-50 */
-        }
-        .sunday, .holiday {
-            background-color: #fef2f2; /* red-50 */
-        }
-        strong {
-            font-weight: 700;
-            color: #1e293b; /* slate-800 */
-        }
-        .today {
-             border-left: 3px solid #ef4444; /* red-500 */
+        .header-cell .project-title { font-size: 0.95rem; color: #1e293b; }
+        .header-cell .project-details { font-size: 0.8rem; font-weight: 400; color: #64748b; }
+        .saturday { background-color: #f0f9ff; /* sky-50 */ }
+        .sunday, .holiday { background-color: #fef2f2; /* red-50 */ }
+        strong { font-weight: 700; color: #1e293b; /* slate-800 */ }
+        .today { border-left: 3px solid #ef4444; /* red-500 */ }
+        #status {
+            transition: opacity 0.5s;
         }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800 p-4 sm:p-6 md:p-8">
     <div class="max-w-7xl mx-auto">
         <div class="bg-white shadow-lg rounded-xl overflow-hidden">
-            <div class="p-6 border-b border-gray-200">
-                <h1 class="text-2xl font-bold text-gray-900">案件スケジュール管理シート</h1>
-                <p class="mt-2 text-gray-600">セルを直接クリックして内容を編集できます。</p>
+            <div class="p-6 border-b border-gray-200 flex justify-between items-center">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">【共同編集】案件スケジュール管理シート</h1>
+                    <p class="mt-2 text-gray-600">変更はリアルタイムで全員に共有され、自動保存されます。</p>
+                </div>
+                <div id="status" class="text-sm text-gray-500 opacity-0">保存中...</div>
             </div>
             <div class="overflow-x-auto">
                 <table id="schedule-table" class="min-w-full border-collapse text-sm">
@@ -87,18 +77,37 @@
                         </tr>
                     </thead>
                     <tbody id="schedule-body" class="bg-white">
-                        <!-- スケジュールデータはJavaScriptでここに挿入されます -->
+                        <tr><td colspan="6" class="p-8 text-center text-gray-500">データを読み込んでいます...</td></tr>
                     </tbody>
                 </table>
             </div>
         </div>
         <footer class="text-center mt-6 text-xs text-gray-500">
-            <p>&copy; 2025 Schedule Manager. All rights reserved.</p>
+            <p>UserID: <span id="userId"></span></p>
         </footer>
     </div>
 
-    <script>
-        const scheduleData = [
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, doc, getDocs, setDoc, onSnapshot, query, orderBy, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // --- Firebase Configuration ---
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        const scheduleCollectionPath = `artifacts/${appId}/public/data/schedule`;
+        const scheduleCol = collection(db, scheduleCollectionPath);
+
+        const statusDiv = document.getElementById('status');
+        const userIdSpan = document.getElementById('userId');
+
+        // --- Initial Data (only used if DB is empty) ---
+        const initialScheduleData = [
             { date: "6月20日", dayOfWeek: "金", taskA: "", taskB: "", taskC: "写真プリント/準備", remarks: "**本日**" },
             { date: "6月21日", dayOfWeek: "土", taskA: "", taskB: "", taskC: "", remarks: "休日" },
             { date: "6月22日", dayOfWeek: "日", taskA: "", taskB: "", taskC: "", remarks: "休日" },
@@ -140,43 +149,119 @@
             { date: "7月28日", dayOfWeek: "月", taskA: "", taskB: "", taskC: "**納品日（MYO）**", remarks: "" }
         ];
 
+        // --- Authentication ---
+        async function signIn() {
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+                const user = auth.currentUser;
+                if (user && userIdSpan) {
+                    userIdSpan.textContent = user.uid;
+                }
+                return user;
+            } catch (error) {
+                console.error("Authentication Error:", error);
+                if (userIdSpan) userIdSpan.textContent = "Error";
+                return null;
+            }
+        }
+
+        // --- UI Rendering ---
         function formatCellContent(text) {
             if (!text) return '';
             return text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
         }
 
-        function buildTable() {
+        function buildTable(data) {
             const tableBody = document.getElementById('schedule-body');
             if (!tableBody) return;
             tableBody.innerHTML = ''; 
 
-            scheduleData.forEach(rowData => {
+            data.forEach((rowData, index) => {
                 const row = document.createElement('tr');
                 row.className = 'hover:bg-gray-50';
+                row.dataset.id = rowData.id;
 
-                if (rowData.dayOfWeek === '土') {
-                    row.classList.add('saturday');
-                } else if (rowData.dayOfWeek === '日' || (rowData.remarks && rowData.remarks.includes('祝日'))) {
-                    row.classList.add('sunday');
-                }
-                
-                if (rowData.remarks && rowData.remarks.includes('本日')) {
-                    row.classList.add('today');
-                }
+                if (rowData.dayOfWeek === '土') row.classList.add('saturday');
+                else if (rowData.dayOfWeek === '日' || (rowData.remarks && rowData.remarks.includes('祝日'))) row.classList.add('sunday');
+                if (rowData.remarks && rowData.remarks.includes('本日')) row.classList.add('today');
 
                 row.innerHTML = `
                     <td class="table-cell font-medium text-gray-900">${rowData.date}</td>
                     <td class="table-cell">${rowData.dayOfWeek}</td>
-                    <td class="table-cell" contenteditable="true">${formatCellContent(rowData.taskA)}</td>
-                    <td class="table-cell" contenteditable="true">${formatCellContent(rowData.taskB)}</td>
-                    <td class="table-cell" contenteditable="true">${formatCellContent(rowData.taskC)}</td>
-                    <td class="table-cell" contenteditable="true">${formatCellContent(rowData.remarks)}</td>
+                    <td class="table-cell" contenteditable="true" data-field="taskA">${formatCellContent(rowData.taskA)}</td>
+                    <td class="table-cell" contenteditable="true" data-field="taskB">${formatCellContent(rowData.taskB)}</td>
+                    <td class="table-cell" contenteditable="true" data-field="taskC">${formatCellContent(rowData.taskC)}</td>
+                    <td class="table-cell" contenteditable="true" data-field="remarks">${formatCellContent(rowData.remarks)}</td>
                 `;
                 tableBody.appendChild(row);
             });
         }
+
+        // --- Firestore Interaction ---
+        async function initializeData() {
+            const snapshot = await getDocs(scheduleCol);
+            if (snapshot.empty) {
+                console.log("No data found in Firestore. Initializing with local data.");
+                const batch = writeBatch(db);
+                initialScheduleData.forEach((rowData, index) => {
+                    const docRef = doc(scheduleCol); // Auto-generate ID
+                    batch.set(docRef, { ...rowData, order: index });
+                });
+                await batch.commit();
+            }
+        }
+
+        async function updateCell(docId, field, value) {
+            statusDiv.style.opacity = '1';
+            try {
+                const docRef = doc(db, scheduleCollectionPath, docId);
+                await setDoc(docRef, { [field]: value }, { merge: true });
+            } catch (error) {
+                console.error("Error updating document: ", error);
+                statusDiv.textContent = "Error!";
+            } finally {
+                setTimeout(() => {
+                    statusDiv.style.opacity = '0';
+                    statusDiv.textContent = '保存中...';
+                }, 1500);
+            }
+        }
+
+        // --- Event Listeners ---
+        document.getElementById('schedule-body').addEventListener('blur', (event) => {
+            const cell = event.target;
+            if (cell.hasAttribute('contenteditable')) {
+                const docId = cell.parentElement.dataset.id;
+                const field = cell.dataset.field;
+                const value = cell.textContent; // Use textContent to get plain text
+                updateCell(docId, field, value);
+            }
+        }, true);
         
-        document.addEventListener('DOMContentLoaded', buildTable);
+        // --- Main Execution ---
+        async function main() {
+            const user = await signIn();
+            if (!user) {
+                console.error("Failed to sign in. App cannot connect to database.");
+                return;
+            }
+            await initializeData();
+
+            const q = query(scheduleCol, orderBy("order"));
+            onSnapshot(q, (snapshot) => {
+                const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                buildTable(data);
+            }, (error) => {
+                console.error("Snapshot Error: ", error);
+            });
+        }
+        
+        main();
+
     </script>
 </body>
 </html>
