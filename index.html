@@ -90,7 +90,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, doc, getDocs, setDoc, onSnapshot, query, orderBy, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, doc, getDocs, setDoc, onSnapshot, query, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- Firebase Configuration ---
         const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
@@ -108,45 +108,45 @@
 
         // --- Initial Data (only used if DB is empty) ---
         const initialScheduleData = [
-            { date: "6月20日", dayOfWeek: "金", taskA: "", taskB: "", taskC: "写真プリント/準備", remarks: "**本日**" },
-            { date: "6月21日", dayOfWeek: "土", taskA: "", taskB: "", taskC: "", remarks: "休日" },
-            { date: "6月22日", dayOfWeek: "日", taskA: "", taskB: "", taskC: "", remarks: "休日" },
-            { date: "6月23日", dayOfWeek: "月", taskA: "", taskB: "", taskC: "画像補正", remarks: "" },
-            { date: "6月24日", dayOfWeek: "火", taskA: "", taskB: "", taskC: "画像補正", remarks: "" },
-            { date: "6月25日", dayOfWeek: "水", taskA: "**データ入稿**", taskB: "", taskC: "初校色校正", remarks: "" },
-            { date: "6月26日", dayOfWeek: "木", taskA: "画像補正", taskB: "", taskC: "**初校提出**", remarks: "" },
-            { date: "6月27日", dayOfWeek: "金", taskA: "色校正", taskB: "", taskC: "お戻し", remarks: "" },
-            { date: "6月28日", dayOfWeek: "土", taskA: "", taskB: "", taskC: "", remarks: "休日" },
-            { date: "6月29日", dayOfWeek: "日", taskA: "", taskB: "", taskC: "", remarks: "休日" },
-            { date: "6月30日", dayOfWeek: "月", taskA: "色校提出", taskB: "", taskC: "修正作業", remarks: "" },
-            { date: "7月1日", dayOfWeek: "火", taskA: "", taskB: "", taskC: "再色校正", remarks: "" },
-            { date: "7月2日", dayOfWeek: "水", taskA: "**校了**", taskB: "", taskC: "再校提出", remarks: "" },
-            { date: "7月3日", dayOfWeek: "木", taskA: "刷版", taskB: "", taskC: "", remarks: "" },
-            { date: "7月4日", dayOfWeek: "金", taskA: "印刷", taskB: "**データ入稿**", taskC: "**校了**", remarks: "" },
-            { date: "7月5日", dayOfWeek: "土", taskA: "", taskB: "", taskC: "", remarks: "休日" },
-            { date: "7月6日", dayOfWeek: "日", taskA: "", taskB: "", taskC: "", remarks: "休日" },
-            { date: "7月7日", dayOfWeek: "月", taskA: "加工", taskB: "画像補正", taskC: "印刷", remarks: "" },
-            { date: "7月8日", dayOfWeek: "火", taskA: "移動", taskB: "色校正", taskC: "印刷", remarks: "" },
-            { date: "7月9日", dayOfWeek: "水", taskA: "梱包 ブレイブ", taskB: "色校正提出", taskC: "印刷", remarks: "" },
-            { date: "7月10日", dayOfWeek: "木", taskA: "梱包", taskB: "", taskC: "印刷", remarks: "" },
-            { date: "7月11日", dayOfWeek: "金", taskA: "梱包", taskB: "**校了**", taskC: "印刷", remarks: "" },
-            { date: "7月12日", dayOfWeek: "土", taskA: "", taskB: "", taskC: "", remarks: "休日" },
-            { date: "7月13日", dayOfWeek: "日", taskA: "", taskB: "", taskC: "", remarks: "休日" },
-            { date: "7月14日", dayOfWeek: "月", taskA: "梱包", taskB: "刷版", taskC: "加工", remarks: "中村・融和" },
-            { date: "7月15日", dayOfWeek: "火", taskA: "梱包", taskB: "印刷", taskC: "加工", remarks: "中村・融和" },
-            { date: "7月16日", dayOfWeek: "水", taskA: "梱包", taskB: "印刷", taskC: "加工", remarks: "中村・融和" },
-            { date: "7月17日", dayOfWeek: "木", taskA: "**納品（MYO）**", taskB: "加工 中町", taskC: "加工", remarks: "中村・融和" },
-            { date: "7月18日", dayOfWeek: "金", taskA: "", taskB: "加工 中町", taskC: "加工", remarks: "中村・融和" },
-            { date: "7月19日", dayOfWeek: "土", taskA: "", taskB: "", taskC: "移動 ブレイブ", remarks: "休日" },
-            { date: "7月20日", dayOfWeek: "日", taskA: "", taskB: "", taskC: "", remarks: "休日" },
-            { date: "7月21日", dayOfWeek: "月", taskA: "", taskB: "", taskC: "", remarks: "**祝日(海の日)**" },
-            { date: "7月22日", dayOfWeek: "火", taskA: "", taskB: "**納品日（gf.k）他**", taskC: "梱包", remarks: "ブレイブ" },
-            { date: "7月23日", dayOfWeek: "水", taskA: "", taskB: "", taskC: "梱包", remarks: "" },
-            { date: "7月24日", dayOfWeek: "木", taskA: "", taskB: "", taskC: "梱包", remarks: "" },
-            { date: "7月25日", dayOfWeek: "金", taskA: "", taskB: "", taskC: "梱包", remarks: "" },
-            { date: "7月26日", dayOfWeek: "土", taskA: "", taskB: "", taskC: "", remarks: "休日" },
-            { date: "7月27日", dayOfWeek: "日", taskA: "", taskB: "", taskC: "", remarks: "休日" },
-            { date: "7月28日", dayOfWeek: "月", taskA: "", taskB: "", taskC: "**納品日（MYO）**", remarks: "" }
+            { order: 0, date: "6月20日", dayOfWeek: "金", taskA: "", taskB: "", taskC: "写真プリント/準備", remarks: "**本日**" },
+            { order: 1, date: "6月21日", dayOfWeek: "土", taskA: "", taskB: "", taskC: "", remarks: "休日" },
+            { order: 2, date: "6月22日", dayOfWeek: "日", taskA: "", taskB: "", taskC: "", remarks: "休日" },
+            { order: 3, date: "6月23日", dayOfWeek: "月", taskA: "", taskB: "", taskC: "画像補正", remarks: "" },
+            { order: 4, date: "6月24日", dayOfWeek: "火", taskA: "", taskB: "", taskC: "画像補正", remarks: "" },
+            { order: 5, date: "6月25日", dayOfWeek: "水", taskA: "**データ入稿**", taskB: "", taskC: "初校色校正", remarks: "" },
+            { order: 6, date: "6月26日", dayOfWeek: "木", taskA: "画像補正", taskB: "", taskC: "**初校提出**", remarks: "" },
+            { order: 7, date: "6月27日", dayOfWeek: "金", taskA: "色校正", taskB: "", taskC: "お戻し", remarks: "" },
+            { order: 8, date: "6月28日", dayOfWeek: "土", taskA: "", taskB: "", taskC: "", remarks: "休日" },
+            { order: 9, date: "6月29日", dayOfWeek: "日", taskA: "", taskB: "", taskC: "", remarks: "休日" },
+            { order: 10, date: "6月30日", dayOfWeek: "月", taskA: "色校提出", taskB: "", taskC: "修正作業", remarks: "" },
+            { order: 11, date: "7月1日", dayOfWeek: "火", taskA: "", taskB: "", taskC: "再色校正", remarks: "" },
+            { order: 12, date: "7月2日", dayOfWeek: "水", taskA: "**校了**", taskB: "", taskC: "再校提出", remarks: "" },
+            { order: 13, date: "7月3日", dayOfWeek: "木", taskA: "刷版", taskB: "", taskC: "", remarks: "" },
+            { order: 14, date: "7月4日", dayOfWeek: "金", taskA: "印刷", taskB: "**データ入稿**", taskC: "**校了**", remarks: "" },
+            { order: 15, date: "7月5日", dayOfWeek: "土", taskA: "", taskB: "", taskC: "", remarks: "休日" },
+            { order: 16, date: "7月6日", dayOfWeek: "日", taskA: "", taskB: "", taskC: "", remarks: "休日" },
+            { order: 17, date: "7月7日", dayOfWeek: "月", taskA: "加工", taskB: "画像補正", taskC: "印刷", remarks: "" },
+            { order: 18, date: "7月8日", dayOfWeek: "火", taskA: "移動", taskB: "色校正", taskC: "印刷", remarks: "" },
+            { order: 19, date: "7月9日", dayOfWeek: "水", taskA: "梱包 ブレイブ", taskB: "色校正提出", taskC: "印刷", remarks: "" },
+            { order: 20, date: "7月10日", dayOfWeek: "木", taskA: "梱包", taskB: "", taskC: "印刷", remarks: "" },
+            { order: 21, date: "7月11日", dayOfWeek: "金", taskA: "梱包", taskB: "**校了**", taskC: "印刷", remarks: "" },
+            { order: 22, date: "7月12日", dayOfWeek: "土", taskA: "", taskB: "", taskC: "", remarks: "休日" },
+            { order: 23, date: "7月13日", dayOfWeek: "日", taskA: "", taskB: "", taskC: "", remarks: "休日" },
+            { order: 24, date: "7月14日", dayOfWeek: "月", taskA: "梱包", taskB: "刷版", taskC: "加工", remarks: "中村・融和" },
+            { order: 25, date: "7月15日", dayOfWeek: "火", taskA: "梱包", taskB: "印刷", taskC: "加工", remarks: "中村・融和" },
+            { order: 26, date: "7月16日", dayOfWeek: "水", taskA: "梱包", taskB: "印刷", taskC: "加工", remarks: "中村・融和" },
+            { order: 27, date: "7月17日", dayOfWeek: "木", taskA: "**納品（MYO）**", taskB: "加工 中町", taskC: "加工", remarks: "中村・融和" },
+            { order: 28, date: "7月18日", dayOfWeek: "金", taskA: "", taskB: "加工 中町", taskC: "加工", remarks: "中村・融和" },
+            { order: 29, date: "7月19日", dayOfWeek: "土", taskA: "", taskB: "", taskC: "移動 ブレイブ", remarks: "休日" },
+            { order: 30, date: "7月20日", dayOfWeek: "日", taskA: "", taskB: "", taskC: "", remarks: "休日" },
+            { order: 31, date: "7月21日", dayOfWeek: "月", taskA: "", taskB: "", taskC: "", remarks: "**祝日(海の日)**" },
+            { order: 32, date: "7月22日", dayOfWeek: "火", taskA: "", taskB: "**納品日（gf.k）他**", taskC: "梱包", remarks: "ブレイブ" },
+            { order: 33, date: "7月23日", dayOfWeek: "水", taskA: "", taskB: "", taskC: "梱包", remarks: "" },
+            { order: 34, date: "7月24日", dayOfWeek: "木", taskA: "", taskB: "", taskC: "梱包", remarks: "" },
+            { order: 35, date: "7月25日", dayOfWeek: "金", taskA: "", taskB: "", taskC: "梱包", remarks: "" },
+            { order: 36, date: "7月26日", dayOfWeek: "土", taskA: "", taskB: "", taskC: "", remarks: "休日" },
+            { order: 37, date: "7月27日", dayOfWeek: "日", taskA: "", taskB: "", taskC: "", remarks: "休日" },
+            { order: 38, date: "7月28日", dayOfWeek: "月", taskA: "", taskB: "", taskC: "**納品日（MYO）**", remarks: "" }
         ];
 
         // --- Authentication ---
@@ -180,7 +180,10 @@
             if (!tableBody) return;
             tableBody.innerHTML = ''; 
 
-            data.forEach((rowData, index) => {
+            // Sort data by the 'order' field before rendering
+            const sortedData = data.sort((a, b) => a.order - b.order);
+
+            sortedData.forEach((rowData) => {
                 const row = document.createElement('tr');
                 row.className = 'hover:bg-gray-50';
                 row.dataset.id = rowData.id;
@@ -207,9 +210,9 @@
             if (snapshot.empty) {
                 console.log("No data found in Firestore. Initializing with local data.");
                 const batch = writeBatch(db);
-                initialScheduleData.forEach((rowData, index) => {
+                initialScheduleData.forEach((rowData) => {
                     const docRef = doc(scheduleCol); // Auto-generate ID
-                    batch.set(docRef, { ...rowData, order: index });
+                    batch.set(docRef, rowData);
                 });
                 await batch.commit();
             }
@@ -244,19 +247,32 @@
         
         // --- Main Execution ---
         async function main() {
+            console.log("Starting application...");
             const user = await signIn();
             if (!user) {
                 console.error("Failed to sign in. App cannot connect to database.");
+                document.getElementById('schedule-body').innerHTML = '<tr><td colspan="6" class="p-8 text-center text-red-500">データベースへの接続に失敗しました。</td></tr>';
                 return;
             }
+            console.log("User signed in:", user.uid);
+            
             await initializeData();
+            console.log("Data initialized.");
 
-            const q = query(scheduleCol, orderBy("order"));
+            // Removed orderBy from the query to prevent index-related errors
+            const q = query(scheduleCol); 
             onSnapshot(q, (snapshot) => {
+                console.log("Received snapshot with", snapshot.size, "documents.");
                 const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                buildTable(data);
+                if (data.length === 0) {
+                     console.log("Snapshot is empty, something might be wrong.");
+                     document.getElementById('schedule-body').innerHTML = '<tr><td colspan="6" class="p-8 text-center text-gray-500">データがありません。</td></tr>';
+                } else {
+                    buildTable(data);
+                }
             }, (error) => {
                 console.error("Snapshot Error: ", error);
+                document.getElementById('schedule-body').innerHTML = `<tr><td colspan="6" class="p-8 text-center text-red-500">データの読み込み中にエラーが発生しました: ${error.message}</td></tr>`;
             });
         }
         
