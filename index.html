@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>案件スケジュール管理シート (スタンドアロン版)</title>
+    <title>案件スケジュール管理シート (リアルタイム共有版)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
@@ -46,8 +46,21 @@
     <div class="max-w-7xl mx-auto">
         <div class="bg-white shadow-lg rounded-xl overflow-hidden">
             <div class="p-6 border-b border-gray-200">
-                <h1 class="text-2xl font-bold text-gray-900">案件スケジュール管理シート (スタンドアロン版)</h1>
-                <p class="mt-2 text-gray-600">セルを直接クリックして編集できます。(注: 編集内容は保存されません)</p>
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-900">案件スケジュール管理シート (リアルタイム共有版)</h1>
+                        <p class="mt-2 text-gray-600">複数人でリアルタイムに編集できます。編集内容は自動で保存・共有されます。</p>
+                    </div>
+                    <div class="flex items-center gap-4">
+                         <div id="status-indicator" class="px-4 py-2 bg-gray-100 text-gray-800 rounded-lg flex items-center gap-2">
+                            <svg id="status-icon" class="w-5 h-5 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                            <span id="status-text">接続中...</span>
+                        </div>
+                        <button id="reset-btn" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+                            全員のデータをリセット
+                        </button>
+                    </div>
+                </div>
             </div>
             <div class="overflow-x-auto">
                 <table id="schedule-table" class="min-w-full border-collapse text-sm">
@@ -71,7 +84,7 @@
                         </tr>
                     </thead>
                     <tbody id="schedule-body" class="bg-white">
-                        <!-- スケジュールデータはJavaScriptでここに挿入されます -->
+                        <!-- データはFirebaseから読み込まれます -->
                     </tbody>
                 </table>
             </div>
@@ -81,76 +94,179 @@
         </footer>
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const scheduleData = [
-                { date: "6月20日", dayOfWeek: "金", taskA: "", taskB: "", taskC: "写真プリント/準備", remarks: "**本日**" },
-                { date: "6月21日", dayOfWeek: "土", taskA: "", taskB: "", taskC: "", remarks: "休日" },
-                { date: "6月22日", dayOfWeek: "日", taskA: "", taskB: "", taskC: "", remarks: "休日" },
-                { date: "6月23日", dayOfWeek: "月", taskA: "", taskB: "", taskC: "画像補正", remarks: "" },
-                { date: "6月24日", dayOfWeek: "火", taskA: "", taskB: "", taskC: "画像補正", remarks: "" },
-                { date: "6月25日", dayOfWeek: "水", taskA: "**データ入稿**", taskB: "", taskC: "初校色校正", remarks: "" },
-                { date: "6月26日", dayOfWeek: "木", taskA: "画像補正", taskB: "", taskC: "**初校提出**", remarks: "" },
-                { date: "6月27日", dayOfWeek: "金", taskA: "色校正", taskB: "", taskC: "お戻し", remarks: "" },
-                { date: "6月28日", dayOfWeek: "土", taskA: "", taskB: "", taskC: "", remarks: "休日" },
-                { date: "6月29日", dayOfWeek: "日", taskA: "", taskB: "", taskC: "", remarks: "休日" },
-                { date: "6月30日", dayOfWeek: "月", taskA: "色校提出", taskB: "", taskC: "修正作業", remarks: "" },
-                { date: "7月1日", dayOfWeek: "火", taskA: "", taskB: "", taskC: "再色校正", remarks: "" },
-                { date: "7月2日", dayOfWeek: "水", taskA: "**校了**", taskB: "", taskC: "再校提出", remarks: "" },
-                { date: "7月3日", dayOfWeek: "木", taskA: "刷版", taskB: "", taskC: "", remarks: "" },
-                { date: "7月4日", dayOfWeek: "金", taskA: "印刷", taskB: "**データ入稿**", taskC: "**校了**", remarks: "" },
-                { date: "7月5日", dayOfWeek: "土", taskA: "", taskB: "", taskC: "", remarks: "休日" },
-                { date: "7月6日", dayOfWeek: "日", taskA: "", taskB: "", taskC: "", remarks: "休日" },
-                { date: "7月7日", dayOfWeek: "月", taskA: "加工", taskB: "画像補正", taskC: "印刷", remarks: "" },
-                { date: "7月8日", dayOfWeek: "火", taskA: "移動", taskB: "色校正", taskC: "印刷", remarks: "" },
-                { date: "7月9日", dayOfWeek: "水", taskA: "梱包 ブレイブ", taskB: "色校正提出", taskC: "印刷", remarks: "" },
-                { date: "7月10日", dayOfWeek: "木", taskA: "梱包", taskB: "", taskC: "印刷", remarks: "" },
-                { date: "7月11日", dayOfWeek: "金", taskA: "梱包", taskB: "**校了**", taskC: "印刷", remarks: "" },
-                { date: "7月12日", dayOfWeek: "土", taskA: "", taskB: "", taskC: "", remarks: "休日" },
-                { date: "7月13日", dayOfWeek: "日", taskA: "", taskB: "", taskC: "", remarks: "休日" },
-                { date: "7月14日", dayOfWeek: "月", taskA: "梱包", taskB: "刷版", taskC: "加工", remarks: "中村・融和" },
-                { date: "7月15日", dayOfWeek: "火", taskA: "梱包", taskB: "印刷", taskC: "加工", remarks: "中村・融和" },
-                { date: "7月16日", dayOfWeek: "水", taskA: "梱包", taskB: "印刷", taskC: "加工", remarks: "中村・融和" },
-                { date: "7月17日", dayOfWeek: "木", taskA: "**納品（MYO）**", taskB: "加工 中町", taskC: "加工", remarks: "中村・融和" },
-                { date: "7月18日", dayOfWeek: "金", taskA: "", taskB: "加工 中町", taskC: "加工", remarks: "中村・融和" },
-                { date: "7月19日", dayOfWeek: "土", taskA: "", taskB: "", taskC: "移動 ブレイブ", remarks: "休日" },
-                { date: "7月20日", dayOfWeek: "日", taskA: "", taskB: "", taskC: "", remarks: "休日" },
-                { date: "7月21日", dayOfWeek: "月", taskA: "", taskB: "", taskC: "", remarks: "**祝日(海の日)**" },
-                { date: "7月22日", dayOfWeek: "火", taskA: "", taskB: "**納品日（gf.k）他**", taskC: "梱包", remarks: "ブレイブ" },
-                { date: "7月23日", dayOfWeek: "水", taskA: "", taskB: "", taskC: "梱包", remarks: "" },
-                { date: "7月24日", dayOfWeek: "木", taskA: "", taskB: "", taskC: "梱包", remarks: "" },
-                { date: "7月25日", dayOfWeek: "金", taskA: "", taskB: "", taskC: "梱包", remarks: "" },
-                { date: "7月26日", dayOfWeek: "土", taskA: "", taskB: "", taskC: "", remarks: "休日" },
-                { date: "7月27日", dayOfWeek: "日", taskA: "", taskB: "", taskC: "", remarks: "休日" },
-                { date: "7月28日", dayOfWeek: "月", taskA: "", taskB: "", taskC: "**納品日（MYO）**", remarks: "" }
-            ];
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
+      import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-database.js";
 
-            const tableBody = document.getElementById('schedule-body');
-            if (!tableBody) return;
+      const firebaseConfig = {
+        apiKey: "AIzaSyDziOdzQ_4WfH7BKnRRu-FPdZSsfg6lzms",
+        authDomain: "photcon-schedule.firebaseapp.com",
+        databaseURL: "https://photcon-schedule-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "photcon-schedule",
+        storageBucket: "photcon-schedule.firebasestorage.app",
+        messagingSenderId: "764048492611",
+        appId: "1:764048492611:web:93a1061d14643c10822cf6"
+      };
 
-            tableBody.innerHTML = ''; // テーブルをクリア
+      const app = initializeApp(firebaseConfig);
+      const database = getDatabase(app);
+      const scheduleRef = ref(database, 'scheduleData');
 
-            scheduleData.forEach(rowData => {
-                const row = document.createElement('tr');
-                let rowClass = 'hover:bg-gray-50';
-                if (rowData.dayOfWeek === '土') rowClass += ' saturday';
-                if (rowData.dayOfWeek === '日' || (rowData.remarks && rowData.remarks.includes('祝日'))) rowClass += ' sunday';
-                if (rowData.remarks && rowData.remarks.includes('本日')) rowClass += ' today';
-                row.className = rowClass;
+      const defaultScheduleData = [
+          { date: "6月20日", dayOfWeek: "金", taskA: "", taskB: "", taskC: "写真プリント/準備", remarks: "**本日**" },
+          { date: "6月21日", dayOfWeek: "土", taskA: "", taskB: "", taskC: "", remarks: "休日" },
+          { date: "6月22日", dayOfWeek: "日", taskA: "", taskB: "", taskC: "", remarks: "休日" },
+          { date: "6月23日", dayOfWeek: "月", taskA: "", taskB: "", taskC: "画像補正", remarks: "" },
+          { date: "6月24日", dayOfWeek: "火", taskA: "", taskB: "", taskC: "画像補正", remarks: "" },
+          { date: "6月25日", dayOfWeek: "水", taskA: "**データ入稿**", taskB: "", taskC: "初校色校正", remarks: "" },
+          { date: "6月26日", dayOfWeek: "木", taskA: "画像補正", taskB: "", taskC: "**初校提出**", remarks: "" },
+          { date: "6月27日", dayOfWeek: "金", taskA: "色校正", taskB: "", taskC: "お戻し", remarks: "" },
+          { date: "6月28日", dayOfWeek: "土", taskA: "", taskB: "", taskC: "", remarks: "休日" },
+          { date: "6月29日", dayOfWeek: "日", taskA: "", taskB: "", taskC: "", remarks: "休日" },
+          { date: "6月30日", dayOfWeek: "月", taskA: "色校提出", taskB: "", taskC: "修正作業", remarks: "" },
+          { date: "7月1日", dayOfWeek: "火", taskA: "", taskB: "", taskC: "再色校正", remarks: "" },
+          { date: "7月2日", dayOfWeek: "水", taskA: "**校了**", taskB: "", taskC: "再校提出", remarks: "" },
+          { date: "7月3日", dayOfWeek: "木", taskA: "刷版", taskB: "", taskC: "", remarks: "" },
+          { date: "7月4日", dayOfWeek: "金", taskA: "印刷", taskB: "**データ入稿**", taskC: "**校了**", remarks: "" },
+          { date: "7月5日", dayOfWeek: "土", taskA: "", taskB: "", taskC: "", remarks: "休日" },
+          { date: "7月6日", dayOfWeek: "日", taskA: "", taskB: "", taskC: "", remarks: "休日" },
+          { date: "7月7日", dayOfWeek: "月", taskA: "加工", taskB: "画像補正", taskC: "印刷", remarks: "" },
+          { date: "7月8日", dayOfWeek: "火", taskA: "移動", taskB: "色校正", taskC: "印刷", remarks: "" },
+          { date: "7月9日", dayOfWeek: "水", taskA: "梱包 ブレイブ", taskB: "色校正提出", taskC: "印刷", remarks: "" },
+          { date: "7月10日", dayOfWeek: "木", taskA: "梱包", taskB: "", taskC: "印刷", remarks: "" },
+          { date: "7月11日", dayOfWeek: "金", taskA: "梱包", taskB: "**校了**", taskC: "印刷", remarks: "" },
+          { date: "7月12日", dayOfWeek: "土", taskA: "", taskB: "", taskC: "", remarks: "休日" },
+          { date: "7月13日", dayOfWeek: "日", taskA: "", taskB: "", taskC: "", remarks: "休日" },
+          { date: "7月14日", dayOfWeek: "月", taskA: "梱包", taskB: "刷版", taskC: "加工", remarks: "中村・融和" },
+          { date: "7月15日", dayOfWeek: "火", taskA: "梱包", taskB: "印刷", taskC: "加工", remarks: "中村・融和" },
+          { date: "7月16日", dayOfWeek: "水", taskA: "梱包", taskB: "印刷", taskC: "加工", remarks: "中村・融和" },
+          { date: "7月17日", dayOfWeek: "木", taskA: "**納品（MYO）**", taskB: "加工 中町", taskC: "加工", remarks: "中村・融和" },
+          { date: "7月18日", dayOfWeek: "金", taskA: "", taskB: "加工 中町", taskC: "加工", remarks: "中村・融和" },
+          { date: "7月19日", dayOfWeek: "土", taskA: "", taskB: "", taskC: "移動 ブレイブ", remarks: "休日" },
+          { date: "7月20日", dayOfWeek: "日", taskA: "", taskB: "", taskC: "", remarks: "休日" },
+          { date: "7月21日", dayOfWeek: "月", taskA: "", taskB: "", taskC: "", remarks: "**祝日(海の日)**" },
+          { date: "7月22日", dayOfWeek: "火", taskA: "", taskB: "**納品日（gf.k）他**", taskC: "梱包", remarks: "ブレイブ" },
+          { date: "7月23日", dayOfWeek: "水", taskA: "", taskB: "", taskC: "梱包", remarks: "" },
+          { date: "7月24日", dayOfWeek: "木", taskA: "", taskB: "", taskC: "梱包", remarks: "" },
+          { date: "7月25日", dayOfWeek: "金", taskA: "", taskB: "", taskC: "梱包", remarks: "" },
+          { date: "7月26日", dayOfWeek: "土", taskA: "", taskB: "", taskC: "", remarks: "休日" },
+          { date: "7月27日", dayOfWeek: "日", taskA: "", taskB: "", taskC: "", remarks: "休日" },
+          { date: "7月28日", dayOfWeek: "月", taskA: "", taskB: "", taskC: "**納品日（MYO）**", remarks: "" }
+      ];
 
-                const formatCellContent = (text) => text ? text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') : '';
+      let scheduleData = [];
+      let autoSaveTimer = null;
+      let isFirstLoad = true;
 
-                row.innerHTML = `
-                    <td class="table-cell font-medium text-gray-900">${rowData.date}</td>
-                    <td class="table-cell">${rowData.dayOfWeek}</td>
-                    <td class="table-cell" contenteditable="true">${formatCellContent(rowData.taskA)}</td>
-                    <td class="table-cell" contenteditable="true">${formatCellContent(rowData.taskB)}</td>
-                    <td class="table-cell" contenteditable="true">${formatCellContent(rowData.taskC)}</td>
-                    <td class="table-cell" contenteditable="true">${formatCellContent(rowData.remarks)}</td>
-                `;
-                tableBody.appendChild(row);
-            });
-        });
+      const statusIcon = document.getElementById('status-icon');
+      const statusText = document.getElementById('status-text');
+
+      function updateStatus(text, isConnected, isSaving = false) {
+          statusText.textContent = text;
+          statusIcon.classList.toggle('animate-spin', isSaving || text === '接続中...');
+          statusIcon.innerHTML = isConnected 
+              ? `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />` 
+              : `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />`;
+          statusIcon.closest('div').classList.toggle('bg-red-100', !isConnected && text !== '接続中...');
+          statusIcon.closest('div').classList.toggle('bg-green-100', isConnected && !isSaving);
+      }
+
+      onValue(scheduleRef, (snapshot) => {
+          const data = snapshot.val();
+          if (data) {
+              scheduleData = data;
+          } else {
+              scheduleData = JSON.parse(JSON.stringify(defaultScheduleData));
+              set(scheduleRef, scheduleData);
+          }
+          renderTable();
+          if (isFirstLoad) {
+              updateStatus('接続完了', true);
+              isFirstLoad = false;
+          } else {
+              updateStatus('同期完了', true);
+          }
+      }, (error) => {
+          console.error("Firebase read failed:", error);
+          updateStatus('接続エラー', false);
+          alert("データベースとの接続に失敗しました。ページをリロードしてください。");
+      });
+
+      function saveToFirebase() {
+          if (autoSaveTimer) clearTimeout(autoSaveTimer);
+          updateStatus('保存中...', true, true);
+          set(scheduleRef, scheduleData).catch((error) => {
+              console.error("Firebase write failed:", error);
+              updateStatus('保存失敗', false);
+              alert("データの保存に失敗しました。");
+          });
+      }
+
+      function renderTable() {
+          const tableBody = document.getElementById('schedule-body');
+          if (!tableBody) return;
+          tableBody.innerHTML = '';
+          scheduleData.forEach((rowData, index) => {
+              const row = document.createElement('tr');
+              let rowClass = 'hover:bg-gray-50';
+              if (rowData.dayOfWeek === '土') rowClass += ' saturday';
+              if (rowData.dayOfWeek === '日' || (rowData.remarks && rowData.remarks.includes('祝日'))) rowClass += ' sunday';
+              if (rowData.remarks && rowData.remarks.includes('本日')) rowClass += ' today';
+              row.className = rowClass;
+              const formatCellContent = (text) => text ? text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') : '';
+              row.innerHTML = `
+                  <td class="table-cell font-medium text-gray-900">${rowData.date}</td>
+                  <td class="table-cell">${rowData.dayOfWeek}</td>
+                  <td class="table-cell" contenteditable="true" data-field="taskA" data-index="${index}">${formatCellContent(rowData.taskA)}</td>
+                  <td class="table-cell" contenteditable="true" data-field="taskB" data-index="${index}">${formatCellContent(rowData.taskB)}</td>
+                  <td class="table-cell" contenteditable="true" data-field="taskC" data-index="${index}">${formatCellContent(rowData.taskC)}</td>
+                  <td class="table-cell" contenteditable="true" data-field="remarks" data-index="${index}">${formatCellContent(rowData.remarks)}</td>
+              `;
+              tableBody.appendChild(row);
+          });
+          addEditListeners();
+      }
+
+      function addEditListeners() {
+          const editableCells = document.querySelectorAll('[contenteditable="true"]');
+          editableCells.forEach(cell => {
+              cell.addEventListener('input', handleCellEdit);
+              cell.addEventListener('blur', handleCellBlur);
+          });
+      }
+
+      function handleCellEdit(event) {
+          const cell = event.target;
+          const field = cell.dataset.field;
+          const index = parseInt(cell.dataset.index);
+          if (index >= 0 && index < scheduleData.length && field) {
+              scheduleData[index][field] = cell.innerText;
+              if (autoSaveTimer) clearTimeout(autoSaveTimer);
+              autoSaveTimer = setTimeout(saveToFirebase, 2000);
+          }
+      }
+
+      function handleCellBlur(event) {
+          const cell = event.target;
+          const field = cell.dataset.field;
+          const index = parseInt(cell.dataset.index);
+          if (index >= 0 && index < scheduleData.length && field) {
+              scheduleData[index][field] = cell.innerText;
+              if (autoSaveTimer) clearTimeout(autoSaveTimer);
+              saveToFirebase();
+          }
+      }
+
+      function resetData() {
+          if (confirm('共有している全データを初期状態に戻します。この操作は元に戻せません。よろしいですか？')) {
+              const freshData = JSON.parse(JSON.stringify(defaultScheduleData));
+              set(scheduleRef, freshData)
+                  .then(() => alert('データをリセットしました。'))
+                  .catch((error) => alert('リセットに失敗しました: ' + error.message));
+          }
+      }
+
+      document.getElementById('reset-btn').addEventListener('click', resetData);
     </script>
 </body>
 </html>
