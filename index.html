@@ -78,6 +78,10 @@
                     <div>
                         <h1 class="text-2xl font-bold text-gray-900">MYO納品用スケジュール管理シート</h1>
                         <p class="mt-2 text-gray-600">複数人でリアルタイムに編集できます。編集内容は自動で保存・共有されます。</p>
+                        <div class="mt-2 text-sm text-gray-500 space-y-1">
+                            <p><b>文字装飾:</b> <code>**太字**</code> → <strong>太字</strong>, <code>(red:赤文字)</code> → <span class="text-red-500 font-semibold">赤文字</span></p>
+                            <p><b>使用可能な色:</b> <code class="bg-gray-200 p-1 rounded">red</code>, <code class="bg-gray-200 p-1 rounded">blue</code>, <code class="bg-gray-200 p-1 rounded">green</code>, <code class="bg-gray-200 p-1 rounded">orange</code></p>
+                        </div>
                     </div>
                     <div class="flex items-center gap-4">
                         <button id="download-btn" class="download-btn px-6 py-3 text-white rounded-lg font-medium flex items-center gap-2">
@@ -131,6 +135,10 @@
                     <div>
                         <h2 class="text-2xl font-bold text-gray-900">支社直送用スケジュール管理シート</h2>
                         <p class="mt-2 text-gray-600">複数人でリアルタイムに編集できます。編集内容は自動で保存・共有されます。</p>
+                        <div class="mt-2 text-sm text-gray-500 space-y-1">
+                            <p><b>文字装飾:</b> <code>**太字**</code> → <strong>太字</strong>, <code>(red:赤文字)</code> → <span class="text-red-500 font-semibold">赤文字</span></p>
+                            <p><b>使用可能な色:</b> <code class="bg-gray-200 p-1 rounded">red</code>, <code class="bg-gray-200 p-1 rounded">blue</code>, <code class="bg-gray-200 p-1 rounded">green</code>, <code class="bg-gray-200 p-1 rounded">orange</code></p>
+                        </div>
                     </div>
                     <div class="flex items-center gap-4">
                         <button id="download-btn-2" class="download-btn px-6 py-3 text-white rounded-lg font-medium flex items-center gap-2">
@@ -518,6 +526,30 @@
           });
       }
 
+      function formatCellContent(text) {
+          if (!text) return '';
+          
+          const escapeDiv = document.createElement('div');
+          escapeDiv.textContent = text;
+          let formattedText = escapeDiv.innerHTML;
+
+          formattedText = formattedText.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+
+          const colors = {
+              red: '#ef4444',
+              blue: '#3b82f6',
+              green: '#22c55e',
+              orange: '#f97316'
+          };
+
+          for (const color in colors) {
+              const regex = new RegExp(`\\((${color}):(.*?)\\)`, 'g');
+              formattedText = formattedText.replace(regex, `<span style="color: ${colors[color]}; font-weight: 600;">$2</span>`);
+          }
+          
+          return formattedText;
+      }
+
       function renderTable() {
           const tableBody = document.getElementById('schedule-body');
           if (!tableBody) return;
@@ -529,15 +561,22 @@
               if (rowData.dayOfWeek === '日' || (rowData.remarks && rowData.remarks.includes('祝日'))) rowClass += ' sunday';
               if (rowData.remarks && rowData.remarks.includes('本日')) rowClass += ' today';
               row.className = rowClass;
-              const formatCellContent = (text) => text ? text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') : '';
+
               row.innerHTML = `
                   <td class="table-cell font-medium text-gray-900">${rowData.date}</td>
                   <td class="table-cell">${rowData.dayOfWeek}</td>
-                  <td class="table-cell" contenteditable="true" data-field="taskA" data-index="${index}">${formatCellContent(rowData.taskA)}</td>
-                  <td class="table-cell" contenteditable="true" data-field="taskB" data-index="${index}">${formatCellContent(rowData.taskB)}</td>
-                  <td class="table-cell" contenteditable="true" data-field="taskC" data-index="${index}">${formatCellContent(rowData.taskC)}</td>
-                  <td class="table-cell" contenteditable="true" data-field="remarks" data-index="${index}">${formatCellContent(rowData.remarks)}</td>
               `;
+
+              ['taskA', 'taskB', 'taskC', 'remarks'].forEach(field => {
+                  const cell = document.createElement('td');
+                  cell.className = 'table-cell';
+                  cell.contentEditable = true;
+                  cell.dataset.field = field;
+                  cell.dataset.index = index;
+                  cell.innerHTML = formatCellContent(rowData[field]);
+                  row.appendChild(cell);
+              });
+              
               tableBody.appendChild(row);
           });
           addEditListeners();
@@ -554,15 +593,23 @@
               if (rowData.dayOfWeek === '日' || (rowData.remarks && rowData.remarks.includes('祝日'))) rowClass += ' sunday';
               if (rowData.remarks && rowData.remarks.includes('本日')) rowClass += ' today';
               row.className = rowClass;
-              const formatCellContent = (text) => text ? text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') : '';
+
               row.innerHTML = `
                   <td class="table-cell font-medium text-gray-900">${rowData.date}</td>
                   <td class="table-cell">${rowData.dayOfWeek}</td>
-                  <td class="table-cell" contenteditable="true" data-field="taskA" data-index="${index}" data-table="2">${formatCellContent(rowData.taskA)}</td>
-                  <td class="table-cell" contenteditable="true" data-field="taskB" data-index="${index}" data-table="2">${formatCellContent(rowData.taskB)}</td>
-                  <td class="table-cell" contenteditable="true" data-field="taskC" data-index="${index}" data-table="2">${formatCellContent(rowData.taskC)}</td>
-                  <td class="table-cell" contenteditable="true" data-field="remarks" data-index="${index}" data-table="2">${formatCellContent(rowData.remarks)}</td>
               `;
+
+              ['taskA', 'taskB', 'taskC', 'remarks'].forEach(field => {
+                  const cell = document.createElement('td');
+                  cell.className = 'table-cell';
+                  cell.contentEditable = true;
+                  cell.dataset.field = field;
+                  cell.dataset.index = index;
+                  cell.dataset.table = "2";
+                  cell.innerHTML = formatCellContent(rowData[field]);
+                  row.appendChild(cell);
+              });
+
               tableBody.appendChild(row);
           });
           addEditListeners2();
@@ -571,7 +618,7 @@
       function addEditListeners() {
           const editableCells = document.querySelectorAll('[contenteditable="true"]:not([data-table="2"])');
           editableCells.forEach(cell => {
-              cell.addEventListener('input', handleCellEdit);
+              cell.addEventListener('focus', handleCellFocus);
               cell.addEventListener('blur', handleCellBlur);
           });
       }
@@ -579,30 +626,20 @@
       function addEditListeners2() {
           const editableCells = document.querySelectorAll('[contenteditable="true"][data-table="2"]');
           editableCells.forEach(cell => {
-              cell.addEventListener('input', handleCellEdit2);
-              cell.addEventListener('blur', handleCellBlur2);
+              cell.addEventListener('focus', handleCellFocus);
+              cell.addEventListener('blur', handleCellBlur);
           });
       }
-
-      function handleCellEdit(event) {
+      
+      function handleCellFocus(event) {
           const cell = event.target;
           const field = cell.dataset.field;
           const index = parseInt(cell.dataset.index);
-          if (index >= 0 && index < scheduleData.length && field) {
-              scheduleData[index][field] = cell.innerText;
-              if (autoSaveTimer) clearTimeout(autoSaveTimer);
-              autoSaveTimer = setTimeout(saveToFirebase, 2000);
-          }
-      }
-
-      function handleCellEdit2(event) {
-          const cell = event.target;
-          const field = cell.dataset.field;
-          const index = parseInt(cell.dataset.index);
-          if (index >= 0 && index < scheduleData2.length && field) {
-              scheduleData2[index][field] = cell.innerText;
-              if (autoSaveTimer2) clearTimeout(autoSaveTimer2);
-              autoSaveTimer2 = setTimeout(saveToFirebase2, 2000);
+          const isTable2 = cell.dataset.table === "2";
+          const data = isTable2 ? scheduleData2 : scheduleData;
+          
+          if (index >= 0 && index < data.length && field) {
+              cell.textContent = data[index][field] || '';
           }
       }
 
@@ -610,21 +647,19 @@
           const cell = event.target;
           const field = cell.dataset.field;
           const index = parseInt(cell.dataset.index);
-          if (index >= 0 && index < scheduleData.length && field) {
-              scheduleData[index][field] = cell.innerText;
-              if (autoSaveTimer) clearTimeout(autoSaveTimer);
-              saveToFirebase();
-          }
-      }
+          const isTable2 = cell.dataset.table === "2";
+          
+          const data = isTable2 ? scheduleData2 : scheduleData;
+          const saveData = isTable2 ? saveToFirebase2 : saveToFirebase;
+          const timer = isTable2 ? autoSaveTimer2 : autoSaveTimer;
 
-      function handleCellBlur2(event) {
-          const cell = event.target;
-          const field = cell.dataset.field;
-          const index = parseInt(cell.dataset.index);
-          if (index >= 0 && index < scheduleData2.length && field) {
-              scheduleData2[index][field] = cell.innerText;
-              if (autoSaveTimer2) clearTimeout(autoSaveTimer2);
-              saveToFirebase2();
+          if (index >= 0 && index < data.length && field) {
+              const rawText = cell.textContent;
+              data[index][field] = rawText;
+              cell.innerHTML = formatCellContent(rawText);
+              
+              if (timer) clearTimeout(timer);
+              saveData();
           }
       }
 
