@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>案件スケジュール管理シート (リアルタイム共有版)</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
         body {
@@ -40,6 +41,33 @@
         .sunday, .holiday { background-color: #fef2f2; /* red-50 */ }
         strong { font-weight: 700; color: #1e293b; /* slate-800 */ }
         .today { border-left: 3px solid #ef4444; /* red-500 */ }
+        
+        /* ダウンロードボタンのスタイル */
+        .download-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transition: all 0.3s ease;
+        }
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+        .download-btn:active {
+            transform: translateY(0);
+        }
+        
+        /* ローディングアニメーション */
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800 p-4 sm:p-6 md:p-8">
@@ -48,11 +76,17 @@
             <div class="p-6 border-b border-gray-200">
                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div>
-                        <h1 class="text-2xl font-bold text-gray-900">案件スケジュール管理シート (リアルタイム共有版)</h1>
+                        <h1 class="text-2xl font-bold text-gray-900">MYO納品用スケジュール管理シート (リアルタイム共有版)</h1>
                         <p class="mt-2 text-gray-600">複数人でリアルタイムに編集できます。編集内容は自動で保存・共有されます。</p>
                     </div>
                     <div class="flex items-center gap-4">
-                         <div id="status-indicator" class="px-4 py-2 bg-gray-100 text-gray-800 rounded-lg flex items-center gap-2">
+                        <button id="download-btn" class="download-btn px-6 py-3 text-white rounded-lg font-medium flex items-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                            <span id="download-text">画像ダウンロード</span>
+                        </button>
+                        <div id="status-indicator" class="px-4 py-2 bg-gray-100 text-gray-800 rounded-lg flex items-center gap-2">
                             <svg id="status-icon" class="w-5 h-5 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                             <span id="status-text">接続中...</span>
                         </div>
@@ -89,6 +123,60 @@
                 </table>
             </div>
         </div>
+        
+        <!-- 案件スケジュール管理シート2 -->
+        <div class="bg-white shadow-lg rounded-xl overflow-hidden mt-8">
+            <div class="p-6 border-b border-gray-200">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-900">支社直送用スケジュール管理シート</h2>
+                        <p class="mt-2 text-gray-600">複数人でリアルタイムに編集できます。編集内容は自動で保存・共有されます。</p>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <button id="download-btn-2" class="download-btn px-6 py-3 text-white rounded-lg font-medium flex items-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                            <span id="download-text-2">画像ダウンロード</span>
+                        </button>
+                        <div id="status-indicator-2" class="px-4 py-2 bg-gray-100 text-gray-800 rounded-lg flex items-center gap-2">
+                            <svg id="status-icon-2" class="w-5 h-5 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                            <span id="status-text-2">接続中...</span>
+                        </div>
+                        <button id="reset-btn-2" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+                            全員のデータをリセット
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="overflow-x-auto">
+                <table id="schedule-table-2" class="min-w-full border-collapse text-sm">
+                    <thead class="text-left text-gray-700">
+                        <tr>
+                            <th class="table-cell header-cell w-24">日付</th>
+                            <th class="table-cell header-cell w-16">曜日</th>
+                            <th class="table-cell header-cell">
+                                <div class="project-title">プロジェクトA</div>
+                                <div class="project-details">詳細情報</div>
+                            </th>
+                            <th class="table-cell header-cell">
+                                <div class="project-title">プロジェクトB</div>
+                                <div class="project-details">詳細情報</div>
+                            </th>
+                            <th class="table-cell header-cell">
+                                <div class="project-title">プロジェクトC</div>
+                                <div class="project-details">詳細情報</div>
+                            </th>
+                            <th class="table-cell header-cell">備考</th>
+                        </tr>
+                    </thead>
+                    <tbody id="schedule-body-2" class="bg-white">
+                        <!-- データはFirebaseから読み込まれます -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
         <footer class="text-center mt-6 text-xs text-gray-500">
             <p>&copy; 2025 Schedule Manager.</p>
         </footer>
@@ -111,6 +199,7 @@
       const app = initializeApp(firebaseConfig);
       const database = getDatabase(app);
       const scheduleRef = ref(database, 'scheduleData');
+      const scheduleRef2 = ref(database, 'scheduleData2');
 
       const defaultScheduleData = [
           { date: "6月20日", dayOfWeek: "金", taskA: "", taskB: "", taskC: "写真プリント/準備", remarks: "**本日**" },
@@ -154,12 +243,64 @@
           { date: "7月28日", dayOfWeek: "月", taskA: "", taskB: "", taskC: "**納品日（MYO）**", remarks: "" }
       ];
 
+      const defaultScheduleData2 = [
+          { date: "6月20日", dayOfWeek: "金", taskA: "", taskB: "", taskC: "", remarks: "" },
+          { date: "6月21日", dayOfWeek: "土", taskA: "", taskB: "", taskC: "", remarks: "休日" },
+          { date: "6月22日", dayOfWeek: "日", taskA: "", taskB: "", taskC: "", remarks: "休日" },
+          { date: "6月23日", dayOfWeek: "月", taskA: "", taskB: "", taskC: "", remarks: "" },
+          { date: "6月24日", dayOfWeek: "火", taskA: "", taskB: "", taskC: "", remarks: "" },
+          { date: "6月25日", dayOfWeek: "水", taskA: "", taskB: "", taskC: "", remarks: "" },
+          { date: "6月26日", dayOfWeek: "木", taskA: "", taskB: "", taskC: "", remarks: "" },
+          { date: "6月27日", dayOfWeek: "金", taskA: "", taskB: "", taskC: "", remarks: "" },
+          { date: "6月28日", dayOfWeek: "土", taskA: "", taskB: "", taskC: "", remarks: "休日" },
+          { date: "6月29日", dayOfWeek: "日", taskA: "", taskB: "", taskC: "", remarks: "休日" },
+          { date: "6月30日", dayOfWeek: "月", taskA: "", taskB: "", taskC: "", remarks: "" },
+          { date: "7月1日", dayOfWeek: "火", taskA: "", taskB: "", taskC: "", remarks: "" },
+          { date: "7月2日", dayOfWeek: "水", taskA: "", taskB: "", taskC: "", remarks: "" },
+          { date: "7月3日", dayOfWeek: "木", taskA: "", taskB: "", taskC: "", remarks: "" },
+          { date: "7月4日", dayOfWeek: "金", taskA: "", taskB: "", taskC: "", remarks: "" },
+          { date: "7月5日", dayOfWeek: "土", taskA: "", taskB: "", taskC: "", remarks: "休日" },
+          { date: "7月6日", dayOfWeek: "日", taskA: "", taskB: "", taskC: "", remarks: "休日" },
+          { date: "7月7日", dayOfWeek: "月", taskA: "", taskB: "", taskC: "", remarks: "" },
+          { date: "7月8日", dayOfWeek: "火", taskA: "", taskB: "", taskC: "", remarks: "" },
+          { date: "7月9日", dayOfWeek: "水", taskA: "", taskB: "", taskC: "", remarks: "" },
+          { date: "7月10日", dayOfWeek: "木", taskA: "", taskB: "", taskC: "", remarks: "" },
+          { date: "7月11日", dayOfWeek: "金", taskA: "", taskB: "", taskC: "", remarks: "" },
+          { date: "7月12日", dayOfWeek: "土", taskA: "", taskB: "", taskC: "", remarks: "休日" },
+          { date: "7月13日", dayOfWeek: "日", taskA: "", taskB: "", taskC: "", remarks: "休日" },
+          { date: "7月14日", dayOfWeek: "月", taskA: "", taskB: "", taskC: "", remarks: "" },
+          { date: "7月15日", dayOfWeek: "火", taskA: "", taskB: "", taskC: "", remarks: "" },
+          { date: "7月16日", dayOfWeek: "水", taskA: "", taskB: "", taskC: "", remarks: "" },
+          { date: "7月17日", dayOfWeek: "木", taskA: "", taskB: "", taskC: "", remarks: "" },
+          { date: "7月18日", dayOfWeek: "金", taskA: "", taskB: "", taskC: "", remarks: "" },
+          { date: "7月19日", dayOfWeek: "土", taskA: "", taskB: "", taskC: "", remarks: "休日" },
+          { date: "7月20日", dayOfWeek: "日", taskA: "", taskB: "", taskC: "", remarks: "休日" },
+          { date: "7月21日", dayOfWeek: "月", taskA: "", taskB: "", taskC: "", remarks: "**祝日(海の日)**" },
+          { date: "7月22日", dayOfWeek: "火", taskA: "", taskB: "", taskC: "", remarks: "" },
+          { date: "7月23日", dayOfWeek: "水", taskA: "", taskB: "", taskC: "", remarks: "" },
+          { date: "7月24日", dayOfWeek: "木", taskA: "", taskB: "", taskC: "", remarks: "" },
+          { date: "7月25日", dayOfWeek: "金", taskA: "", taskB: "", taskC: "", remarks: "" },
+          { date: "7月26日", dayOfWeek: "土", taskA: "", taskB: "", taskC: "", remarks: "休日" },
+          { date: "7月27日", dayOfWeek: "日", taskA: "", taskB: "", taskC: "", remarks: "休日" },
+          { date: "7月28日", dayOfWeek: "月", taskA: "", taskB: "", taskC: "", remarks: "" }
+      ];
+
       let scheduleData = [];
+      let scheduleData2 = [];
       let autoSaveTimer = null;
+      let autoSaveTimer2 = null;
       let isFirstLoad = true;
+      let isFirstLoad2 = true;
 
       const statusIcon = document.getElementById('status-icon');
       const statusText = document.getElementById('status-text');
+      const downloadBtn = document.getElementById('download-btn');
+      const downloadText = document.getElementById('download-text');
+      
+      const statusIcon2 = document.getElementById('status-icon-2');
+      const statusText2 = document.getElementById('status-text-2');
+      const downloadBtn2 = document.getElementById('download-btn-2');
+      const downloadText2 = document.getElementById('download-text-2');
 
       function updateStatus(text, isConnected, isSaving = false) {
           statusText.textContent = text;
@@ -169,6 +310,144 @@
               : `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />`;
           statusIcon.closest('div').classList.toggle('bg-red-100', !isConnected && text !== '接続中...');
           statusIcon.closest('div').classList.toggle('bg-green-100', isConnected && !isSaving);
+      }
+
+      function updateStatus2(text, isConnected, isSaving = false) {
+          statusText2.textContent = text;
+          statusIcon2.classList.toggle('animate-spin', isSaving || text === '接続中...');
+          statusIcon2.innerHTML = isConnected 
+              ? `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />` 
+              : `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />`;
+          statusIcon2.closest('div').classList.toggle('bg-red-100', !isConnected && text !== '接続中...');
+          statusIcon2.closest('div').classList.toggle('bg-green-100', isConnected && !isSaving);
+      }
+
+      // 画像ダウンロード機能
+      async function downloadScheduleAsImage() {
+          try {
+              // ボタンをローディング状態に
+              downloadBtn.disabled = true;
+              downloadText.innerHTML = '<span class="loading-spinner"></span> 生成中...';
+              
+              const table = document.getElementById('schedule-table');
+              const container = table.closest('.overflow-x-auto');
+              
+              // テーブルの幅を固定してスクロールを無効化
+              const originalStyle = container.style.cssText;
+              container.style.overflow = 'visible';
+              container.style.width = 'auto';
+              
+              // html2canvasで画像生成
+              const canvas = await html2canvas(table, {
+                  backgroundColor: '#ffffff',
+                  scale: 2, // 高解像度
+                  useCORS: true,
+                  allowTaint: true,
+                  width: table.scrollWidth,
+                  height: table.scrollHeight,
+                  scrollX: 0,
+                  scrollY: 0
+              });
+              
+              // 元のスタイルに戻す
+              container.style.cssText = originalStyle;
+              
+              // 画像をダウンロード
+              const link = document.createElement('a');
+              const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+              link.download = `photcon_schedule_${timestamp}.png`;
+              link.href = canvas.toDataURL('image/png');
+              link.click();
+              
+              // ボタンを元に戻す
+              downloadBtn.disabled = false;
+              downloadText.textContent = '画像ダウンロード';
+              
+              // 成功メッセージ
+              showNotification('画像のダウンロードが完了しました！', 'success');
+              
+          } catch (error) {
+              console.error('画像生成エラー:', error);
+              downloadBtn.disabled = false;
+              downloadText.textContent = '画像ダウンロード';
+              showNotification('画像の生成に失敗しました。もう一度お試しください。', 'error');
+          }
+      }
+
+      // 画像ダウンロード機能（スケジュール2）
+      async function downloadScheduleAsImage2() {
+          try {
+              // ボタンをローディング状態に
+              downloadBtn2.disabled = true;
+              downloadText2.innerHTML = '<span class="loading-spinner"></span> 生成中...';
+              
+              const table = document.getElementById('schedule-table-2');
+              const container = table.closest('.overflow-x-auto');
+              
+              // テーブルの幅を固定してスクロールを無効化
+              const originalStyle = container.style.cssText;
+              container.style.overflow = 'visible';
+              container.style.width = 'auto';
+              
+              // html2canvasで画像生成
+              const canvas = await html2canvas(table, {
+                  backgroundColor: '#ffffff',
+                  scale: 2, // 高解像度
+                  useCORS: true,
+                  allowTaint: true,
+                  width: table.scrollWidth,
+                  height: table.scrollHeight,
+                  scrollX: 0,
+                  scrollY: 0
+              });
+              
+              // 元のスタイルに戻す
+              container.style.cssText = originalStyle;
+              
+              // 画像をダウンロード
+              const link = document.createElement('a');
+              const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+              link.download = `photcon_schedule2_${timestamp}.png`;
+              link.href = canvas.toDataURL('image/png');
+              link.click();
+              
+              // ボタンを元に戻す
+              downloadBtn2.disabled = false;
+              downloadText2.textContent = '画像ダウンロード';
+              
+              // 成功メッセージ
+              showNotification('画像のダウンロードが完了しました！', 'success');
+              
+          } catch (error) {
+              console.error('画像生成エラー:', error);
+              downloadBtn2.disabled = false;
+              downloadText2.textContent = '画像ダウンロード';
+              showNotification('画像の生成に失敗しました。もう一度お試しください。', 'error');
+          }
+      }
+
+      // 通知機能
+      function showNotification(message, type = 'info') {
+          const notification = document.createElement('div');
+          notification.className = `fixed top-4 right-4 px-6 py-3 rounded-lg text-white font-medium z-50 transform transition-all duration-300 translate-x-full`;
+          
+          if (type === 'success') {
+              notification.classList.add('bg-green-500');
+          } else if (type === 'error') {
+              notification.classList.add('bg-red-500');
+          } else {
+              notification.classList.add('bg-blue-500');
+          }
+          
+          notification.textContent = message;
+          document.body.appendChild(notification);
+          
+          // アニメーション
+          setTimeout(() => notification.classList.remove('translate-x-full'), 100);
+          setTimeout(() => {
+              notification.classList.add('translate-x-full');
+              setTimeout(() => document.body.removeChild(notification), 300);
+          }, 3000);
       }
 
       onValue(scheduleRef, (snapshot) => {
@@ -192,12 +471,43 @@
           alert("データベースとの接続に失敗しました。ページをリロードしてください。");
       });
 
+      onValue(scheduleRef2, (snapshot) => {
+          const data = snapshot.val();
+          if (data) {
+              scheduleData2 = data;
+          } else {
+              scheduleData2 = JSON.parse(JSON.stringify(defaultScheduleData2));
+              set(scheduleRef2, scheduleData2);
+          }
+          renderTable2();
+          if (isFirstLoad2) {
+              updateStatus2('接続完了', true);
+              isFirstLoad2 = false;
+          } else {
+              updateStatus2('同期完了', true);
+          }
+      }, (error) => {
+          console.error("Firebase read failed:", error);
+          updateStatus2('接続エラー', false);
+          alert("データベースとの接続に失敗しました。ページをリロードしてください。");
+      });
+
       function saveToFirebase() {
           if (autoSaveTimer) clearTimeout(autoSaveTimer);
           updateStatus('保存中...', true, true);
           set(scheduleRef, scheduleData).catch((error) => {
               console.error("Firebase write failed:", error);
               updateStatus('保存失敗', false);
+              alert("データの保存に失敗しました。");
+          });
+      }
+
+      function saveToFirebase2() {
+          if (autoSaveTimer2) clearTimeout(autoSaveTimer2);
+          updateStatus2('保存中...', true, true);
+          set(scheduleRef2, scheduleData2).catch((error) => {
+              console.error("Firebase write failed:", error);
+              updateStatus2('保存失敗', false);
               alert("データの保存に失敗しました。");
           });
       }
@@ -227,11 +537,44 @@
           addEditListeners();
       }
 
+      function renderTable2() {
+          const tableBody = document.getElementById('schedule-body-2');
+          if (!tableBody) return;
+          tableBody.innerHTML = '';
+          scheduleData2.forEach((rowData, index) => {
+              const row = document.createElement('tr');
+              let rowClass = 'hover:bg-gray-50';
+              if (rowData.dayOfWeek === '土') rowClass += ' saturday';
+              if (rowData.dayOfWeek === '日' || (rowData.remarks && rowData.remarks.includes('祝日'))) rowClass += ' sunday';
+              if (rowData.remarks && rowData.remarks.includes('本日')) rowClass += ' today';
+              row.className = rowClass;
+              const formatCellContent = (text) => text ? text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') : '';
+              row.innerHTML = `
+                  <td class="table-cell font-medium text-gray-900">${rowData.date}</td>
+                  <td class="table-cell">${rowData.dayOfWeek}</td>
+                  <td class="table-cell" contenteditable="true" data-field="taskA" data-index="${index}" data-table="2">${formatCellContent(rowData.taskA)}</td>
+                  <td class="table-cell" contenteditable="true" data-field="taskB" data-index="${index}" data-table="2">${formatCellContent(rowData.taskB)}</td>
+                  <td class="table-cell" contenteditable="true" data-field="taskC" data-index="${index}" data-table="2">${formatCellContent(rowData.taskC)}</td>
+                  <td class="table-cell" contenteditable="true" data-field="remarks" data-index="${index}" data-table="2">${formatCellContent(rowData.remarks)}</td>
+              `;
+              tableBody.appendChild(row);
+          });
+          addEditListeners2();
+      }
+
       function addEditListeners() {
-          const editableCells = document.querySelectorAll('[contenteditable="true"]');
+          const editableCells = document.querySelectorAll('[contenteditable="true"]:not([data-table="2"])');
           editableCells.forEach(cell => {
               cell.addEventListener('input', handleCellEdit);
               cell.addEventListener('blur', handleCellBlur);
+          });
+      }
+
+      function addEditListeners2() {
+          const editableCells = document.querySelectorAll('[contenteditable="true"][data-table="2"]');
+          editableCells.forEach(cell => {
+              cell.addEventListener('input', handleCellEdit2);
+              cell.addEventListener('blur', handleCellBlur2);
           });
       }
 
@@ -246,6 +589,17 @@
           }
       }
 
+      function handleCellEdit2(event) {
+          const cell = event.target;
+          const field = cell.dataset.field;
+          const index = parseInt(cell.dataset.index);
+          if (index >= 0 && index < scheduleData2.length && field) {
+              scheduleData2[index][field] = cell.innerText;
+              if (autoSaveTimer2) clearTimeout(autoSaveTimer2);
+              autoSaveTimer2 = setTimeout(saveToFirebase2, 2000);
+          }
+      }
+
       function handleCellBlur(event) {
           const cell = event.target;
           const field = cell.dataset.field;
@@ -254,6 +608,17 @@
               scheduleData[index][field] = cell.innerText;
               if (autoSaveTimer) clearTimeout(autoSaveTimer);
               saveToFirebase();
+          }
+      }
+
+      function handleCellBlur2(event) {
+          const cell = event.target;
+          const field = cell.dataset.field;
+          const index = parseInt(cell.dataset.index);
+          if (index >= 0 && index < scheduleData2.length && field) {
+              scheduleData2[index][field] = cell.innerText;
+              if (autoSaveTimer2) clearTimeout(autoSaveTimer2);
+              saveToFirebase2();
           }
       }
 
@@ -266,7 +631,20 @@
           }
       }
 
+      function resetData2() {
+          if (confirm('共有している全データを初期状態に戻します。この操作は元に戻せません。よろしいですか？')) {
+              const freshData = JSON.parse(JSON.stringify(defaultScheduleData2));
+              set(scheduleRef2, freshData)
+                  .then(() => alert('データをリセットしました。'))
+                  .catch((error) => alert('リセットに失敗しました: ' + error.message));
+          }
+      }
+
+      // イベントリスナーの設定
       document.getElementById('reset-btn').addEventListener('click', resetData);
+      document.getElementById('reset-btn-2').addEventListener('click', resetData2);
+      downloadBtn.addEventListener('click', downloadScheduleAsImage);
+      downloadBtn2.addEventListener('click', downloadScheduleAsImage2);
     </script>
 </body>
 </html>
