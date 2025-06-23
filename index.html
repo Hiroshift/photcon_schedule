@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>案件スケジュール管理シート (リアルタイム共有版)</title>
+    <title>案件スケジュール管理シート</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
@@ -76,7 +76,7 @@
             <div class="p-6 border-b border-gray-200">
                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div>
-                        <h1 class="text-2xl font-bold text-gray-900">MYO納品用スケジュール管理シート (リアルタイム共有版)</h1>
+                        <h1 class="text-2xl font-bold text-gray-900">MYO納品用スケジュール管理シート</h1>
                         <p class="mt-2 text-gray-600">複数人でリアルタイムに編集できます。編集内容は自動で保存・共有されます。</p>
                     </div>
                     <div class="flex items-center gap-4">
@@ -156,16 +156,16 @@
                             <th class="table-cell header-cell w-24">日付</th>
                             <th class="table-cell header-cell w-16">曜日</th>
                             <th class="table-cell header-cell">
-                                <div class="project-title">プロジェクトA</div>
-                                <div class="project-details">詳細情報</div>
+                                <div class="project-title">未来チラシ</div>
+                                <div class="project-details">A4ペラ / 仮16万部</div>
                             </th>
                             <th class="table-cell header-cell">
-                                <div class="project-title">プロジェクトB</div>
-                                <div class="project-details">詳細情報</div>
+                                <div class="project-title">勧奨チラシ</div>
+                                <div class="project-details">A4ぺら / 仮7万部</div>
                             </th>
                             <th class="table-cell header-cell">
-                                <div class="project-title">プロジェクトC</div>
-                                <div class="project-details">詳細情報</div>
+                                <div class="project-title">フォトコン作品集</div>
+                                <div class="project-details">16P / 仮10万部</div>
                             </th>
                             <th class="table-cell header-cell">備考</th>
                         </tr>
@@ -240,7 +240,10 @@
           { date: "7月25日", dayOfWeek: "金", taskA: "", taskB: "", taskC: "梱包", remarks: "" },
           { date: "7月26日", dayOfWeek: "土", taskA: "", taskB: "", taskC: "", remarks: "休日" },
           { date: "7月27日", dayOfWeek: "日", taskA: "", taskB: "", taskC: "", remarks: "休日" },
-          { date: "7月28日", dayOfWeek: "月", taskA: "", taskB: "", taskC: "**納品日（MYO）**", remarks: "" }
+          { date: "7月28日", dayOfWeek: "月", taskA: "", taskB: "", taskC: "**納品日（MYO）**", remarks: "" },
+          { date: "7月29日", dayOfWeek: "火", taskA: "", taskB: "", taskC: "", remarks: "" },
+          { date: "7月30日", dayOfWeek: "水", taskA: "", taskB: "", taskC: "", remarks: "" },
+          { date: "7月31日", dayOfWeek: "木", taskA: "", taskB: "", taskC: "", remarks: "" }
       ];
 
       const defaultScheduleData2 = [
@@ -282,7 +285,10 @@
           { date: "7月25日", dayOfWeek: "金", taskA: "", taskB: "", taskC: "", remarks: "" },
           { date: "7月26日", dayOfWeek: "土", taskA: "", taskB: "", taskC: "", remarks: "休日" },
           { date: "7月27日", dayOfWeek: "日", taskA: "", taskB: "", taskC: "", remarks: "休日" },
-          { date: "7月28日", dayOfWeek: "月", taskA: "", taskB: "", taskC: "", remarks: "" }
+          { date: "7月28日", dayOfWeek: "月", taskA: "", taskB: "", taskC: "", remarks: "" },
+          { date: "7月29日", dayOfWeek: "火", taskA: "", taskB: "", taskC: "", remarks: "" },
+          { date: "7月30日", dayOfWeek: "水", taskA: "", taskB: "", taskC: "", remarks: "" },
+          { date: "7月31日", dayOfWeek: "木", taskA: "", taskB: "", taskC: "", remarks: "" }
       ];
 
       let scheduleData = [];
@@ -626,7 +632,12 @@
           if (confirm('共有している全データを初期状態に戻します。この操作は元に戻せません。よろしいですか？')) {
               const freshData = JSON.parse(JSON.stringify(defaultScheduleData));
               set(scheduleRef, freshData)
-                  .then(() => alert('データをリセットしました。'))
+                  .then(() => {
+                      alert('データをリセットしました。新しい日付（7月31日まで）が反映されます。');
+                      // 強制的にローカルデータも更新
+                      scheduleData = freshData;
+                      renderTable();
+                  })
                   .catch((error) => alert('リセットに失敗しました: ' + error.message));
           }
       }
@@ -635,7 +646,12 @@
           if (confirm('共有している全データを初期状態に戻します。この操作は元に戻せません。よろしいですか？')) {
               const freshData = JSON.parse(JSON.stringify(defaultScheduleData2));
               set(scheduleRef2, freshData)
-                  .then(() => alert('データをリセットしました。'))
+                  .then(() => {
+                      alert('データをリセットしました。新しい日付（7月31日まで）が反映されます。');
+                      // 強制的にローカルデータも更新
+                      scheduleData2 = freshData;
+                      renderTable2();
+                  })
                   .catch((error) => alert('リセットに失敗しました: ' + error.message));
           }
       }
